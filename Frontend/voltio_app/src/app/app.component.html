@@ -2,3 +2,11 @@
 <h1 class="text-center text-2xl font-bold my-4">
   Welcome to Voltio App!
 </h1>
+
+<div class="flex flex-col items-center">
+  <button (mousedown)="startHolding('increment')" (mouseup)="stopHolding()" (click)="mouseUp()">Click me to increment</button>
+  <p class="text-6xl font-mono tracking-widest bg-black text-green-400 px-6 py-2 rounded-md shadow-inner" style="font-family: 'Seven Segment', 'Courier New', Courier, monospace;">
+    {{ counter }}
+  </p>
+  <button (mousedown)="startHolding('decrement')" (mouseup)="stopHolding()" (click)="mouseUp()">Click me to decrement</button>
+</div>
