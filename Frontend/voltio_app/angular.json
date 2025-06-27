@@ -5,6 +5,7 @@
   "projects": {
     "voltio_app": {
       "projectType": "application",
+
       "schematics": {
         "@schematics/angular:component": {
           "standalone": false
@@ -16,6 +17,7 @@
           "standalone": false
         }
       },
+
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
