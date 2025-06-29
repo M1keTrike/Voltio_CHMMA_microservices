@@ -1,0 +1,17 @@
+# Imagen base de Go
+FROM golang:1.19
+
+# Crear y establecer el directorio de trabajo
+WORKDIR /app
+
+# Copiar archivos del proyecto
+COPY . .
+
+# Descargar dependencias y compilar
+RUN go mod tidy && go build -o websocket_server cmd/main.go
+
+# Exponer el puerto del servidor WebSocket
+EXPOSE 8080
+
+# Ejecutar el servidor WebSocket
+CMD ["./websocket_server"]
