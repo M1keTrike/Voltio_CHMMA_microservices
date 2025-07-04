@@ -1,0 +1,27 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # Tu servidor WebSocket de Go
+  app:
+    build: . # Le dice a Compose que construya la imagen desde el Dockerfile en este directorio
+    container_name: go_websocket_app
+    restart: unless-stopped
+    # No exponemos el puerto 8081 al exterior, Caddy lo manejará por nosotros.
+
+  # El proxy inverso Caddy
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy_proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"   # Puerto para la verificación HTTP de Let's Encrypt
+      - "443:443" # Puerto para las conexiones HTTPS y WSS
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile # Montamos nuestro archivo de configuración de Caddy
+      - caddy_data:/data                 # Volumen para persistir los certificados SSL
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
