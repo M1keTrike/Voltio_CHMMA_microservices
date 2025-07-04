@@ -1,0 +1,9 @@
+# Caddyfile
+# ¡IMPORTANTE! Reemplaza ws.tudominio.com con tu subdominio real.
+ws.tudominio.com {
+    # Caddy obtiene y renueva automáticamente un certificado SSL de Let's Encrypt para este dominio.
+    # Luego, redirige todo el tráfico al servicio 'app' en el puerto 8081.
+    # 'app' es el nombre del servicio en nuestro docker-compose.yml.
+    # Docker Compose crea una red interna donde los servicios se comunican por su nombre.
+    reverse_proxy app:8081
+}

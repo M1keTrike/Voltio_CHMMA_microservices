@@ -1,17 +1,36 @@
-# Imagen base de Go
-FROM golang:1.19
+# Dockerfile
 
-# Crear y establecer el directorio de trabajo
+# --- Etapa de construcción (BUILDER) ---
+# Usamos una imagen oficial de Go como base para compilar
+FROM golang:1.21-alpine AS builder
+
+# Establecemos el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Copiar archivos del proyecto
+# Copiamos los archivos de dependencias de Go (go.mod y go.sum)
+COPY go.mod go.sum ./
+# Descargamos las dependencias para tenerlas en caché
+RUN go mod download
+
+# Copiamos todo el código fuente del proyecto
 COPY . .
 
-# Descargar dependencias y compilar
-RUN go mod tidy && go build -o websocket_server cmd/main.go
+# Compilamos la aplicación.
+# IMPORTANTE: Apuntamos al punto de entrada correcto en ./cmd/main.go
+# -o /app/server crea el binario ejecutable llamado "server"
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /app/server ./cmd/main.go
 
-# Exponer el puerto del servidor WebSocket
-EXPOSE 8080
+# --- Etapa final (FINAL) ---
+# Usamos una imagen base mínima y segura
+FROM alpine:latest
 
-# Ejecutar el servidor WebSocket
-CMD ["./websocket_server"]
+WORKDIR /root/
+
+# Copiamos SÓLO el binario compilado de la etapa anterior
+COPY --from=builder /app/server .
+
+# Exponemos el puerto 8081 que usa tu servidor Gin
+EXPOSE 8081
+
+# El comando que se ejecutará cuando el contenedor inicie
+CMD ["./server"]
