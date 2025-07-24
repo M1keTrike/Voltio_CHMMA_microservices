@@ -6,31 +6,42 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	"github.com/influxdata/influxdb-client-go/v2/api"
 	"github.com/rabbitmq/amqp091-go"
 )
 
 // --- CONFIGURACIÓN ---
-const (
-	amqpURI         = "amqp://admin:trike@52.73.74.139:5672/"
+var (
+	// Variables de entorno con valores por defecto
+	amqpURI         = getEnv("RABBITMQ_URI", "amqp://admin:trike@52.73.74.139:5672/")
 	queueName       = "PZEM_queue"
 	alertsQueueName = "alerts-queue"
-	wsURI           = "wss://websocketvoltio.acstree.xyz/ws?topic=pzem&emitter=true"
+	wsURI           = getEnv("WEBSOCKET_URL", "wss://websocketvoltio.acstree.xyz/ws?topic=pzem&emitter=true")
 
 	// InfluxDB Configuration
-	influxURL    = "http://52.201.107.193:8086"
-	influxToken  = "lJLzxtHLHvPNgdvU9dcInGYb/qLbLxUPgrePzLd47EKCLUWBzJ+RmJkpH0f1HkmQ"
-	influxOrg    = "mi-org"
-	influxBucket = "sensores"
+	influxURL    = getEnv("INFLUXDB_URL", "http://52.201.107.193:8086")
+	influxToken  = getEnv("INFLUXDB_TOKEN", "lJLzxtHLHvPNgdvU9dcInGYb/qLbLxUPgrePzLd47EKCLUWBzJ+RmJkpH0f1HkmQ")
+	influxOrg    = getEnv("INFLUXDB_ORG", "mi-org")
+	influxBucket = getEnv("INFLUXDB_BUCKET", "sensores")
 
 	// Timeout Configuration - Más tiempo para PZEM (equipos más estables)
 	timeoutDuration = 5 * time.Minute  // 5 minutos vs 2 minutos de sensores
 	checkInterval   = 60 * time.Second // Check cada minuto
 )
+
+// getEnv obtiene variable de entorno con valor por defecto
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
 
 // --- ESTRUCTURAS ---
 type PZEMMessage struct {
@@ -70,7 +81,7 @@ type PZEMConsumer struct {
 	AlertsChannel *amqp091.Channel
 	WSConn        *websocket.Conn
 	InfluxClient  influxdb2.Client
-	WriteAPI      influxdb2.WriteAPIBlocking
+	WriteAPI      api.WriteAPIBlocking
 
 	// Timeout tracking
 	LastSeen      map[string]time.Time
