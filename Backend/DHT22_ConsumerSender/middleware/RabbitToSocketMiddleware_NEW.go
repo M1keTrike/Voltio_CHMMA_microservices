@@ -11,13 +11,14 @@ import (
 
 	"github.com/gorilla/websocket"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	"github.com/influxdata/influxdb-client-go/v2/api"
 	"github.com/rabbitmq/amqp091-go"
 )
 
 // --- CONFIGURACIÓN ---
 const (
 	amqpURI         = "amqp://admin:trike@52.73.74.139:5672/"
-	queueName       = "dht22-data-queue"
+	queueName       = "DHT22_queue"
 	alertsQueueName = "alerts-queue"
 	wsURI           = "wss://websocketvoltio.acstree.xyz/ws?topic=dht22&emitter=true"
 
@@ -34,9 +35,12 @@ const (
 
 // --- ESTRUCTURAS ---
 type DHT22Message struct {
-	MAC         string  `json:"mac"`
-	Temperature float64 `json:"temperature"`
-	Humidity    float64 `json:"humidity"`
+	DeviceID string `json:"deviceId"`
+	Payload  struct {
+		MAC         string  `json:"mac"`
+		Temperature float64 `json:"temperature"`
+		Humidity    float64 `json:"humidity"`
+	} `json:"payload"`
 }
 
 type AlertMessage struct {
@@ -63,7 +67,7 @@ type DHT22Consumer struct {
 	AlertsChannel *amqp091.Channel
 	WSConn        *websocket.Conn
 	InfluxClient  influxdb2.Client
-	WriteAPI      influxdb2.WriteAPIBlocking
+	WriteAPI      api.WriteAPIBlocking
 
 	// Timeout tracking
 	LastSeen      map[string]time.Time
@@ -172,7 +176,7 @@ func (dc *DHT22Consumer) Start() error {
 			// Éxito
 			d.Ack(false)
 			log.Printf("✅ [DHT22] Mensaje procesado - MAC: %s, Temp: %.1f°C, Hum: %.1f%%",
-				dht22Msg.MAC, dht22Msg.Temperature, dht22Msg.Humidity)
+				dht22Msg.Payload.MAC, dht22Msg.Payload.Temperature, dht22Msg.Payload.Humidity)
 		}
 	}()
 
@@ -187,7 +191,7 @@ func (dc *DHT22Consumer) processMessage(dht22Msg *DHT22Message, originalBody []b
 	var errorsMutex sync.Mutex
 
 	// Actualizar timestamp de último mensaje visto
-	dc.updateLastSeen(dht22Msg.MAC)
+	dc.updateLastSeen(dht22Msg.Payload.MAC)
 
 	wg.Add(2) // InfluxDB + WebSocket
 
@@ -222,10 +226,13 @@ func (dc *DHT22Consumer) processMessage(dht22Msg *DHT22Message, originalBody []b
 
 func (dc *DHT22Consumer) writeToInfluxDB(dht22Msg *DHT22Message) error {
 	p := influxdb2.NewPoint("temperature_humidity_metrics",
-		map[string]string{"mac": dht22Msg.MAC},
+		map[string]string{
+			"deviceId": dht22Msg.DeviceID,
+			"mac":      dht22Msg.Payload.MAC,
+		},
 		map[string]interface{}{
-			"temperature": dht22Msg.Temperature,
-			"humidity":    dht22Msg.Humidity,
+			"temperature": dht22Msg.Payload.Temperature,
+			"humidity":    dht22Msg.Payload.Humidity,
 		},
 		time.Now(),
 	)
@@ -235,13 +242,13 @@ func (dc *DHT22Consumer) writeToInfluxDB(dht22Msg *DHT22Message) error {
 		return err
 	}
 
-	log.Printf("✅ [DHT22][InfluxDB] Datos escritos para MAC: %s", dht22Msg.MAC)
+	log.Printf("✅ [DHT22][InfluxDB] Datos escritos para MAC: %s", dht22Msg.Payload.MAC)
 	return nil
 }
 
 func (dc *DHT22Consumer) publishToWebSocket(dht22Msg *DHT22Message, originalBody []byte) error {
 	contentPayload := ContentPayload{
-		MAC:     dht22Msg.MAC,
+		MAC:     dht22Msg.Payload.MAC,
 		Message: string(originalBody),
 	}
 
@@ -253,7 +260,7 @@ func (dc *DHT22Consumer) publishToWebSocket(dht22Msg *DHT22Message, originalBody
 		return err
 	}
 
-	log.Printf("✅ [DHT22][WebSocket] Mensaje enviado para MAC: %s", dht22Msg.MAC)
+	log.Printf("✅ [DHT22][WebSocket] Mensaje enviado para MAC: %s", dht22Msg.Payload.MAC)
 	return nil
 }
 
