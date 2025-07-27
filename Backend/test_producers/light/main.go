@@ -50,14 +50,14 @@ func main() {
 
 	// Simular diferentes sensores de luz
 	devices := []struct {
-			DeviceID string
-			MAC      string
-			Location string
-		}{
-			{"LIGHT-DEV-001", "CC:DB:A7:2F:AE:B0", "Sala"},
-			{"LIGHT-DEV-002", "CC:DB:A7:2F:AE:B0", "Cocina"},
-			{"LIGHT-DEV-003", "CC:DB:A7:2F:AE:B0", "Oficina"},
-			{"LIGHT-DEV-004", "CC:DB:A7:2F:AE:B0", "Exterior"},
+		DeviceID string
+		MAC      string
+		Location string
+	}{
+		{"LIGHT-DEV-001", "CC:DB:A7:2F:AE:B0", "Sala"},
+		{"LIGHT-DEV-002", "CC:DB:A7:2F:AE:B0", "Cocina"},
+		{"LIGHT-DEV-003", "CC:DB:A7:2F:AE:B0", "Oficina"},
+		{"LIGHT-DEV-004", "CC:DB:A7:2F:AE:B0", "Exterior"},
 	}
 
 	rand.Seed(time.Now().UnixNano())

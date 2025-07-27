@@ -34,11 +34,12 @@ const (
 
 // --- ESTRUCTURAS ---
 type LightSensorMessage struct {
-	DeviceID string `json:"deviceId"`
-	Payload  struct {
-		MAC        string  `json:"mac"`
-		LightLevel float64 `json:"lightLevel"`
-	} `json:"payload"`
+    SensorMAC  string    `json:"sensor_mac"`
+    SensorType string    `json:"sensor_type"`
+    Timestamp  time.Time `json:"timestamp"`
+    Data       struct {
+        Lux float64 `json:"lux"`
+    } `json:"data"`
 }
 
 type AlertMessage struct {
@@ -174,7 +175,7 @@ func (lsc *LightSensorConsumer) Start() error {
 			// Éxito
 			d.Ack(false)
 			log.Printf("✅ [LIGHT] Mensaje procesado - MAC: %s, Nivel: %.1f lux",
-				lightMsg.Payload.MAC, lightMsg.Payload.LightLevel)
+				lightMsg.SensorMAC, lightMsg.Data.Lux)
 		}
 	}()
 
@@ -189,7 +190,7 @@ func (lsc *LightSensorConsumer) processMessage(lightMsg *LightSensorMessage, ori
 	var errorsMutex sync.Mutex
 
 	// Actualizar timestamp de último mensaje visto
-	lsc.updateLastSeen(lightMsg.Payload.MAC)
+	lsc.updateLastSeen(lightMsg.SensorMAC)
 
 	wg.Add(2) // InfluxDB + WebSocket
 
@@ -224,9 +225,9 @@ func (lsc *LightSensorConsumer) processMessage(lightMsg *LightSensorMessage, ori
 
 func (lsc *LightSensorConsumer) writeToInfluxDB(lightMsg *LightSensorMessage) error {
 	p := influxdb2.NewPoint("light_sensor_metrics",
-		map[string]string{"mac": lightMsg.Payload.MAC},
+		map[string]string{"mac": lightMsg.SensorMAC},
 		map[string]interface{}{
-			"light_level": lightMsg.Payload.LightLevel,
+			"light_level": lightMsg.Data.Lux,
 		},
 		time.Now(),
 	)
@@ -234,13 +235,13 @@ func (lsc *LightSensorConsumer) writeToInfluxDB(lightMsg *LightSensorMessage) er
 	lsc.WriteAPI.WritePoint(p)
 	lsc.WriteAPI.Flush()
 
-	log.Printf("✅ [LIGHT][InfluxDB] Datos escritos para MAC: %s", lightMsg.Payload.MAC)
+	log.Printf("✅ [LIGHT][InfluxDB] Datos escritos para MAC: %s", lightMsg.SensorMAC)
 	return nil
 }
 
 func (lsc *LightSensorConsumer) publishToWebSocket(lightMsg *LightSensorMessage, originalBody []byte) error {
 	contentPayload := ContentPayload{
-		MAC:     lightMsg.Payload.MAC,
+		MAC:     lightMsg.SensorMAC,
 		Message: string(originalBody),
 	}
 
@@ -252,7 +253,7 @@ func (lsc *LightSensorConsumer) publishToWebSocket(lightMsg *LightSensorMessage,
 		return err
 	}
 
-	log.Printf("✅ [LIGHT][WebSocket] Mensaje enviado para MAC: %s", lightMsg.Payload.MAC)
+	log.Printf("✅ [LIGHT][WebSocket] Mensaje enviado para MAC: %s", lightMsg.SensorMAC)
 	return nil
 }
 

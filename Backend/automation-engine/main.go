@@ -1,14 +1,15 @@
 package main
 
 import (
-	"time"
-	"log"
 	"automation-engine/config"
-	"automation-engine/rules"
 	"automation-engine/messaging"
+	"automation-engine/rules"
+	"log"
+	"time"
 )
 
 func main() {
+
 	// 1. Cargar configuración desde variables de entorno.
 	config.Load()
 
@@ -23,7 +24,14 @@ func main() {
 		}
 	}()
 
-	// 4. Iniciar el consumidor de RabbitMQ (bloqueante).
+	 go func() {
+        ticker := time.NewTicker(1 * time.Minute)
+        for range ticker.C {
+            messaging.CheckAndTriggerWorkdayRules()
+        }
+    }()
+
+	
 	log.Println("[Automation-Engine] Iniciando consumidor de eventos...")
 	messaging.StartConsumer()
 }

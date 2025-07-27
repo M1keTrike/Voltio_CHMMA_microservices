@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	amqpURI   = "amqp://admin:trike@52.73.74.139:5672/"
-	exchange  = "amq.topic"
+	amqpURI    = "amqp://admin:trike@52.73.74.139:5672/"
+	exchange   = "amq.topic"
 	routingKey = "pir.data.events"
 )
 

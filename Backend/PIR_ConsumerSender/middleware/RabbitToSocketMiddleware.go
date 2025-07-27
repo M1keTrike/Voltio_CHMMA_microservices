@@ -34,11 +34,12 @@ const (
 
 // --- ESTRUCTURAS ---
 type PIRMessage struct {
-	DeviceID string `json:"deviceId"`
-	Payload  struct {
-		MAC            string `json:"mac"`
-		MotionDetected bool   `json:"motionDetected"`
-	} `json:"payload"`
+    SensorMAC  string    `json:"sensor_mac"`
+    SensorType string    `json:"sensor_type"`
+    Timestamp  time.Time `json:"timestamp"`
+    Data       struct {
+        Motion bool `json:"motion"`
+    } `json:"data"`
 }
 
 type AlertMessage struct {
@@ -174,7 +175,7 @@ func (pc *PIRConsumer) Start() error {
 			// Éxito
 			d.Ack(false)
 			log.Printf("✅ [PIR] Mensaje procesado - MAC: %s, Movimiento: %t",
-				pirMsg.Payload.MAC, pirMsg.Payload.MotionDetected)
+				pirMsg.SensorMAC, pirMsg.Data.Motion)
 		}
 	}()
 
@@ -189,7 +190,7 @@ func (pc *PIRConsumer) processMessage(pirMsg *PIRMessage, originalBody []byte) e
 	var errorsMutex sync.Mutex
 
 	// Actualizar timestamp de último mensaje visto
-	pc.updateLastSeen(pirMsg.Payload.MAC)
+	pc.updateLastSeen(pirMsg.SensorMAC)
 
 	wg.Add(2) // InfluxDB + WebSocket
 
@@ -224,9 +225,9 @@ func (pc *PIRConsumer) processMessage(pirMsg *PIRMessage, originalBody []byte) e
 
 func (pc *PIRConsumer) writeToInfluxDB(pirMsg *PIRMessage) error {
 	p := influxdb2.NewPoint("motion_sensor_metrics",
-		map[string]string{"mac": pirMsg.Payload.MAC},
+		map[string]string{"mac": pirMsg.SensorMAC},
 		map[string]interface{}{
-			"motion_detected": pirMsg.Payload.MotionDetected,
+			"motion_detected": pirMsg.Data.Motion,
 		},
 		time.Now(),
 	)
@@ -234,13 +235,13 @@ func (pc *PIRConsumer) writeToInfluxDB(pirMsg *PIRMessage) error {
 	pc.WriteAPI.WritePoint(p)
 	pc.WriteAPI.Flush()
 
-	log.Printf("✅ [PIR][InfluxDB] Datos escritos para MAC: %s", pirMsg.Payload.MAC)
+	log.Printf("✅ [PIR][InfluxDB] Datos escritos para MAC: %s", pirMsg.SensorMAC)
 	return nil
 }
 
 func (pc *PIRConsumer) publishToWebSocket(pirMsg *PIRMessage, originalBody []byte) error {
 	contentPayload := ContentPayload{
-		MAC:     pirMsg.Payload.MAC,
+		MAC:     pirMsg.SensorMAC,
 		Message: string(originalBody),
 	}
 
@@ -252,7 +253,7 @@ func (pc *PIRConsumer) publishToWebSocket(pirMsg *PIRMessage, originalBody []byt
 		return err
 	}
 
-	log.Printf("✅ [PIR][WebSocket] Mensaje enviado para MAC: %s", pirMsg.Payload.MAC)
+	log.Printf("✅ [PIR][WebSocket] Mensaje enviado para MAC: %s", pirMsg.SensorMAC)
 	return nil
 }
 
