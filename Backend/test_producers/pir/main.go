@@ -50,17 +50,17 @@ func main() {
 
 	// Simular diferentes sensores PIR
 	devices := []struct {
-			DeviceID string
-			MAC      string
-			Location string
-			Activity string // Nivel de actividad esperado
-		}{
-			{"PIR-DEV-001", "CC:DB:A7:2F:AE:B0", "Entrada Principal", "high"},
-			{"PIR-DEV-002", "CC:DB:A7:2F:AE:B0", "Sala de Estar", "medium"},
-			{"PIR-DEV-003", "CC:DB:A7:2F:AE:B0", "Cocina", "medium"},
-			{"PIR-DEV-004", "CC:DB:A7:2F:AE:B0", "Pasillo", "low"},
-			{"PIR-DEV-005", "CC:DB:A7:2F:AE:B0", "Baño", "low"},
-			{"PIR-DEV-006", "CC:DB:A7:2F:AE:B0", "Exterior Trasero", "very_low"},
+		DeviceID string
+		MAC      string
+		Location string
+		Activity string // Nivel de actividad esperado
+	}{
+		{"PIR-DEV-001", "CC:DB:A7:2F:AE:B0", "Entrada Principal", "high"},
+		{"PIR-DEV-002", "CC:DB:A7:2F:AE:B0", "Sala de Estar", "medium"},
+		{"PIR-DEV-003", "CC:DB:A7:2F:AE:B0", "Cocina", "medium"},
+		{"PIR-DEV-004", "CC:DB:A7:2F:AE:B0", "Pasillo", "low"},
+		{"PIR-DEV-005", "CC:DB:A7:2F:AE:B0", "Baño", "low"},
+		{"PIR-DEV-006", "CC:DB:A7:2F:AE:B0", "Exterior Trasero", "very_low"},
 	}
 
 	rand.Seed(time.Now().UnixNano())

@@ -35,12 +35,13 @@ const (
 
 // --- ESTRUCTURAS ---
 type DHT22Message struct {
-	DeviceID string `json:"deviceId"`
-	Payload  struct {
-		MAC         string  `json:"mac"`
+	SensorMAC  string    `json:"sensor_mac"`
+	SensorType string    `json:"sensor_type"`
+	Timestamp  time.Time `json:"timestamp"`
+	Data       struct {
 		Temperature float64 `json:"temperature"`
 		Humidity    float64 `json:"humidity"`
-	} `json:"payload"`
+	} `json:"data"`
 }
 
 type AlertMessage struct {
@@ -176,7 +177,7 @@ func (dc *DHT22Consumer) Start() error {
 			// Éxito
 			d.Ack(false)
 			log.Printf("✅ [DHT22] Mensaje procesado - MAC: %s, Temp: %.1f°C, Hum: %.1f%%",
-				dht22Msg.Payload.MAC, dht22Msg.Payload.Temperature, dht22Msg.Payload.Humidity)
+				dht22Msg.SensorMAC, dht22Msg.Data.Temperature, dht22Msg.Data.Humidity)
 		}
 	}()
 
@@ -191,7 +192,7 @@ func (dc *DHT22Consumer) processMessage(dht22Msg *DHT22Message, originalBody []b
 	var errorsMutex sync.Mutex
 
 	// Actualizar timestamp de último mensaje visto
-	dc.updateLastSeen(dht22Msg.Payload.MAC)
+	dc.updateLastSeen(dht22Msg.SensorMAC)
 
 	wg.Add(2) // InfluxDB + WebSocket
 
@@ -226,10 +227,10 @@ func (dc *DHT22Consumer) processMessage(dht22Msg *DHT22Message, originalBody []b
 
 func (dc *DHT22Consumer) writeToInfluxDB(dht22Msg *DHT22Message) error {
 	p := influxdb2.NewPoint("temperature_humidity_metrics",
-		map[string]string{"deviceId": dht22Msg.DeviceID, "mac": dht22Msg.Payload.MAC},
+		map[string]string{"deviceId": dht22Msg.SensorMAC, "mac": dht22Msg.SensorMAC},
 		map[string]interface{}{
-			"temperature": dht22Msg.Payload.Temperature,
-			"humidity":    dht22Msg.Payload.Humidity,
+			"temperature": dht22Msg.Data.Temperature,
+			"humidity":    dht22Msg.Data.Humidity,
 		},
 		time.Now(),
 	)
@@ -239,13 +240,13 @@ func (dc *DHT22Consumer) writeToInfluxDB(dht22Msg *DHT22Message) error {
 		return err
 	}
 
-	log.Printf("✅ [DHT22][InfluxDB] Datos escritos para MAC: %s", dht22Msg.Payload.MAC)
+	log.Printf("✅ [DHT22][InfluxDB] Datos escritos para MAC: %s", dht22Msg.SensorMAC)
 	return nil
 }
 
 func (dc *DHT22Consumer) publishToWebSocket(dht22Msg *DHT22Message, originalBody []byte) error {
 	contentPayload := ContentPayload{
-		MAC:     dht22Msg.Payload.MAC,
+		MAC:     dht22Msg.SensorMAC,
 		Message: string(originalBody),
 	}
 
@@ -257,7 +258,7 @@ func (dc *DHT22Consumer) publishToWebSocket(dht22Msg *DHT22Message, originalBody
 		return err
 	}
 
-	log.Printf("✅ [DHT22][WebSocket] Mensaje enviado para MAC: %s", dht22Msg.Payload.MAC)
+	log.Printf("✅ [DHT22][WebSocket] Mensaje enviado para MAC: %s", dht22Msg.SensorMAC)
 	return nil
 }
 

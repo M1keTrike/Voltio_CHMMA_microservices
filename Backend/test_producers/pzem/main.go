@@ -55,17 +55,17 @@ func main() {
 
 	// Simular diferentes medidores PZEM
 	devices := []struct {
-			DeviceID    string
-			MAC         string
-			Location    string
-			LoadType    string  // Tipo de carga eléctrica
-			BaseLoad    float64 // Carga base en watts
-			TotalEnergy float64 // Energía acumulada inicial
-		}{
-			{"PZEM-DEV-001", "CC:DB:A7:2F:AE:B0", "Casa Principal", "residential", 1500.0, 1000.0},
-			{"PZEM-DEV-002", "CC:DB:A7:2F:AE:B0", "Aire Acondicionado", "hvac", 3000.0, 2500.0},
-			{"PZEM-DEV-003", "CC:DB:A7:2F:AE:B0", "Iluminación", "lighting", 500.0, 800.0},
-			{"PZEM-DEV-004", "CC:DB:A7:2F:AE:B0", "Oficina", "office", 800.0, 1200.0},
+		DeviceID    string
+		MAC         string
+		Location    string
+		LoadType    string  // Tipo de carga eléctrica
+		BaseLoad    float64 // Carga base en watts
+		TotalEnergy float64 // Energía acumulada inicial
+	}{
+		{"PZEM-DEV-001", "CC:DB:A7:2F:AE:B0", "Casa Principal", "residential", 1500.0, 1000.0},
+		{"PZEM-DEV-002", "CC:DB:A7:2F:AE:B0", "Aire Acondicionado", "hvac", 3000.0, 2500.0},
+		{"PZEM-DEV-003", "CC:DB:A7:2F:AE:B0", "Iluminación", "lighting", 500.0, 800.0},
+		{"PZEM-DEV-004", "CC:DB:A7:2F:AE:B0", "Oficina", "office", 800.0, 1200.0},
 	}
 
 	rand.Seed(time.Now().UnixNano())
