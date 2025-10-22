@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -15,22 +16,29 @@ import (
 )
 
 // --- CONFIGURACIÓN ---
-const (
-	amqpURI         = "amqp://admin:trike@52.73.74.139:5672/"
-	queueName       = "PIR_queue"
-	alertsQueueName = "alerts-queue"
-	wsURI           = "wss://websocketvoltio.acstree.xyz/ws?topic=pir&emitter=true"
+var (
+	amqpURI         = getEnv("RABBITMQ_URI", "amqp://guest:guest@localhost:5672/")
+	queueName       = getEnv("PIR_QUEUE_NAME", "PIR_queue")
+	alertsQueueName = getEnv("ALERTS_QUEUE_NAME", "alerts-queue")
+	wsURI           = getEnv("PIR_WEBSOCKET_URI", "wss://websocketvoltio.acstree.xyz/ws?topic=pir&emitter=true")
 
 	// InfluxDB Configuration
-	influxURL    = "http://52.201.107.193:8086"
-	influxToken  = "lJLzxtHLHvPNgdvU9dcInGYb/qLbLxUPgrePzLd47EKCLUWBzJ+RmJkpH0f1HkmQ"
-	influxOrg    = "mi-org"
-	influxBucket = "sensores"
+	influxURL    = getEnv("INFLUX_URL", "http://localhost:8086")
+	influxToken  = getEnv("INFLUX_TOKEN", "")
+	influxOrg    = getEnv("INFLUX_ORG", "mi-org")
+	influxBucket = getEnv("INFLUX_BUCKET", "sensores")
 
 	// Timeout Configuration
 	timeoutDuration = 2 * time.Minute
 	checkInterval   = 30 * time.Second
 )
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
 
 // --- ESTRUCTURAS ---
 type PIRMessage struct {

@@ -47,7 +47,7 @@ func StartConsumer() {
 	var err error
 	uri := os.Getenv("RABBITMQ_URI")
 	if uri == "" {
-		uri = "amqp://guest:guest@localhost:5672/"
+		log.Fatal("[RabbitMQ] RABBITMQ_URI environment variable is required")
 	}
 	conn, err = amqp.Dial(uri)
 	if err != nil {

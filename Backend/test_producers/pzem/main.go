@@ -5,15 +5,22 @@ import (
 	"encoding/json"
 	"log"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/rabbitmq/amqp091-go"
 )
 
 const (
-	amqpURI   = "amqp://admin:trike@52.73.74.139:5672/"
 	queueName = "PZEM_queue"
 )
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
 
 type PZEMMessage struct {
 	DeviceID string `json:"deviceId"`
@@ -32,6 +39,7 @@ func main() {
 	log.Println("⚡ Iniciando PZEM Producer de Prueba...")
 
 	// Conectar a RabbitMQ
+	amqpURI := getEnv("RABBITMQ_URI", "amqp://guest:guest@localhost:5672/")
 	conn, err := amqp091.Dial(amqpURI)
 	if err != nil {
 		log.Fatalf("Error conectando a RabbitMQ: %v", err)
