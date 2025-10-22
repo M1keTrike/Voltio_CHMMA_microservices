@@ -19,16 +19,16 @@ import (
 // --- CONFIGURACIÓN ---
 var (
 	// Variables de entorno con valores por defecto
-	amqpURI         = getEnv("RABBITMQ_URI", "amqp://admin:trike@52.73.74.139:5672/")
-	queueName       = "PZEM_queue"
-	alertsQueueName = "alerts-queue"
-	wsURI           = getEnv("WEBSOCKET_URL", "wss://websocketvoltio.acstree.xyz/ws?topic=pzem&emitter=true")
+	amqpURI         = getEnv("RABBITMQ_URI", "amqp://guest:guest@localhost:5672/")
+	queueName       = getEnv("PZEM_QUEUE_NAME", "PZEM_queue")
+	alertsQueueName = getEnv("ALERTS_QUEUE_NAME", "alerts-queue")
+	wsURI           = getEnv("PZEM_WEBSOCKET_URI", "wss://websocketvoltio.acstree.xyz/ws?topic=pzem&emitter=true")
 
 	// InfluxDB Configuration
-	influxURL    = getEnv("INFLUXDB_URL", "http://52.201.107.193:8086")
-	influxToken  = getEnv("INFLUXDB_TOKEN", "lJLzxtHLHvPNgdvU9dcInGYb/qLbLxUPgrePzLd47EKCLUWBzJ+RmJkpH0f1HkmQ")
-	influxOrg    = getEnv("INFLUXDB_ORG", "mi-org")
-	influxBucket = getEnv("INFLUXDB_BUCKET", "sensores")
+	influxURL    = getEnv("INFLUX_URL", "http://localhost:8086")
+	influxToken  = getEnv("INFLUX_TOKEN", "")
+	influxOrg    = getEnv("INFLUX_ORG", "mi-org")
+	influxBucket = getEnv("INFLUX_BUCKET", "sensores")
 
 	// Timeout Configuration - Más tiempo para PZEM (equipos más estables)
 	timeoutDuration = 5 * time.Minute  // 5 minutos vs 2 minutos de sensores

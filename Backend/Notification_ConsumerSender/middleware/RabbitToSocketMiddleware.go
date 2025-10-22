@@ -7,20 +7,28 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/rabbitmq/amqp091-go"
 )
 
 // --- CONFIGURACIÓN ---
-const (
-	amqpURI         = "amqp://admin:trike@52.73.74.139:5672/"
-	alertsQueueName = "alerts-queue"
-	apiWebhookURL   = "https://voltioapi.acstree.xyz/api/internal/notifications/service"
+var (
+	amqpURI         = getEnv("RABBITMQ_URI", "amqp://guest:guest@localhost:5672/")
+	alertsQueueName = getEnv("ALERTS_QUEUE_NAME", "alerts-queue")
+	apiWebhookURL   = getEnv("API_WEBHOOK_URL", "https://voltioapi.acstree.xyz/api/internal/notifications/service")
 	requestTimeout  = 30 * time.Second
 	maxRetries      = 3
 	retryDelay      = 5 * time.Second
 )
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
 
 // --- TIPOS DE ALERTAS SOPORTADOS ---
 const (

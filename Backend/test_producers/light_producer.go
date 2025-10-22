@@ -5,16 +5,23 @@ import (
 	"encoding/json"
 	"log"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/rabbitmq/amqp091-go"
 )
 
 const (
-	amqpURI    = "amqp://admin:trike@52.73.74.139:5672/"
 	exchange   = "amq.topic"
 	routingKey = "light.data.events"
 )
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
 
 type LightSensorMessage struct {
 	MAC        string  `json:"mac"`
@@ -25,6 +32,7 @@ func main() {
 	log.Println("💡 Iniciando Light Sensor Producer de Prueba...")
 
 	// Conectar a RabbitMQ
+	amqpURI := getEnv("RABBITMQ_URI", "amqp://guest:guest@localhost:5672/")
 	conn, err := amqp091.Dial(amqpURI)
 	if err != nil {
 		log.Fatalf("Error conectando a RabbitMQ: %v", err)
