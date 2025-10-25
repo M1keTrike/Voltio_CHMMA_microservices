@@ -126,8 +126,6 @@ Before you begin, ensure you have the following installed:
 
 ## 🚀 Quick Start
 
-> **💡 First time setting up?** Follow the comprehensive [Getting Started Guide](./GETTING_STARTED.md) which includes detailed installation instructions for all prerequisites.
-
 ### 1. Clone the Repository
 
 ```bash
