@@ -5,6 +5,8 @@
 
 A real-time IoT sensor monitoring and automation system built with Go microservices, RabbitMQ message queues, WebSockets, and time-series data storage.
 
+> **🚀 New to the project?** Start with the [Getting Started Guide](./GETTING_STARTED.md) for step-by-step setup instructions!
+
 ## 📋 Table of Contents
 
 - [Overview](#overview)
@@ -123,6 +125,8 @@ Before you begin, ensure you have the following installed:
 - **Caddy** - Reverse proxy for WebSocket server (included in WebSocketServer service)
 
 ## 🚀 Quick Start
+
+> **💡 First time setting up?** Follow the comprehensive [Getting Started Guide](./GETTING_STARTED.md) which includes detailed installation instructions for all prerequisites.
 
 ### 1. Clone the Repository
 
@@ -517,6 +521,8 @@ We welcome contributions! Here's how you can help:
    ```
 6. **Open a Pull Request**
 
+For detailed contribution guidelines, code style requirements, and best practices, see [CONTRIBUTING.md](./CONTRIBUTING.md).
+
 ### Development Workflow
 
 - Write clear, descriptive commit messages
@@ -536,8 +542,15 @@ When reporting issues, please include:
 
 ## 📚 Documentation
 
+### Getting Started
+- **[GETTING_STARTED.md](./GETTING_STARTED.md)** - 🚀 **Start here!** Comprehensive step-by-step setup guide for new developers
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Contribution guidelines, code style, and best practices
+
+### Configuration & Security
 - **[ENVIRONMENT_SETUP.md](./ENVIRONMENT_SETUP.md)** - Complete guide to environment variables and configuration
 - **[SECURITY_MIGRATION.md](./SECURITY_MIGRATION.md)** - Security best practices and credential management
+
+### Component Documentation
 - **[Backend/test_producers/README.md](./Backend/test_producers/README.md)** - Test producer documentation and usage
 - **[Backend/PZEM_ConsumerSender/README.md](./Backend/PZEM_ConsumerSender/README.md)** - PZEM consumer implementation details
 
