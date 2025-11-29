@@ -3,9 +3,11 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"sync"
 	"time"
@@ -136,9 +138,15 @@ func (dc *DHT22Consumer) setupConnections() error {
 		return fmt.Errorf("fallo al declarar cola de alertas: %v", err)
 	}
 
-	// WebSocket Connection
+	// WebSocket Connection with TLS support
 	log.Println("Conectando a WebSocket...")
-	dc.WSConn, _, err = websocket.DefaultDialer.Dial(wsURI, nil)
+	dialer := websocket.Dialer{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: false,
+		},
+		HandshakeTimeout: 10 * time.Second,
+	}
+	dc.WSConn, _, err = dialer.Dial(wsURI, http.Header{})
 	if err != nil {
 		return fmt.Errorf("fallo al conectar con WebSocket: %v", err)
 	}

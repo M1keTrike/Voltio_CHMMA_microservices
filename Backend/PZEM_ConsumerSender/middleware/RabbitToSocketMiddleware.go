@@ -3,9 +3,11 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"sync"
 	"time"
@@ -140,9 +142,15 @@ func (pc *PZEMConsumer) setupConnections() error {
 		return fmt.Errorf("fallo al declarar cola de alertas: %v", err)
 	}
 
-	// WebSocket Connection
+	// WebSocket Connection with TLS support
 	log.Println("Conectando a WebSocket...")
-	pc.WSConn, _, err = websocket.DefaultDialer.Dial(wsURI, nil)
+	dialer := websocket.Dialer{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: false,
+		},
+		HandshakeTimeout: 10 * time.Second,
+	}
+	pc.WSConn, _, err = dialer.Dial(wsURI, http.Header{})
 	if err != nil {
 		return fmt.Errorf("fallo al conectar con WebSocket: %v", err)
 	}
