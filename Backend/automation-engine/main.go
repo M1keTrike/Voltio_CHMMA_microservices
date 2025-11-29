@@ -1,17 +1,21 @@
 package main
 
 import (
-	"automation-engine/config"
+	"github.com/joho/godotenv"
 	"automation-engine/messaging"
 	"automation-engine/rules"
 	"log"
 	"time"
+
 )
 
 func main() {
-
-	// 1. Cargar configuración desde variables de entorno.
-	config.Load()
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("[Config] No se pudo cargar el archivo .env, usando variables del sistema")
+	} else {
+		log.Println("[Config] Variables de entorno cargadas desde .env")
+	}
 
 	// 2. Cargar la caché de reglas por primera vez.
 	rules.UpdateCache()
@@ -24,14 +28,13 @@ func main() {
 		}
 	}()
 
-	 go func() {
-        ticker := time.NewTicker(1 * time.Minute)
-        for range ticker.C {
-            messaging.CheckAndTriggerWorkdayRules()
-        }
-    }()
+	go func() {
+		ticker := time.NewTicker(1 * time.Minute)
+		for range ticker.C {
+			messaging.CheckAndTriggerWorkdayRules()
+		}
+	}()
 
-	
 	log.Println("[Automation-Engine] Iniciando consumidor de eventos...")
 	messaging.StartConsumer()
 }

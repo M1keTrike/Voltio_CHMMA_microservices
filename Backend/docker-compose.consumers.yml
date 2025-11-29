@@ -1,0 +1,121 @@
+# ==============================================================================
+# DOCKER COMPOSE VOLTIO BACKEND - SOLO CONSUMERS Y AUTOMATION ENGINE
+# Excluye WebSocket Server (debe estar corriendo externamente)
+# ==============================================================================
+
+version: "3.8"
+
+services:
+  # ----------------------------------------------------------------------------
+  # Automation Engine - Motor de reglas de automatización
+  # ----------------------------------------------------------------------------
+  automation-engine:
+    build:
+      context: ./automation-engine
+      dockerfile: Dockerfile
+    container_name: voltio-automation
+    restart: always
+    environment:
+      RABBITMQ_URI: ${RABBITMQ_URI}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    networks:
+      - voltio-network
+
+  # ----------------------------------------------------------------------------
+  # PIR Consumer - Sensores de movimiento
+  # ----------------------------------------------------------------------------
+  pir-consumer:
+    build:
+      context: ./PIR_ConsumerSender
+      dockerfile: Dockerfile
+    container_name: voltio-pir-consumer
+    restart: always
+    environment:
+      RABBITMQ_URI: ${RABBITMQ_URI}
+      INFLUXDB_URL: ${INFLUXDB_URL}
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN}
+      INFLUXDB_ORG: ${INFLUXDB_ORG}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET}
+      PIR_WEBSOCKET_URI: ${PIR_WEBSOCKET_URI:-ws://websocket-host:8081/ws?topic=pir&emitter=true}
+    networks:
+      - voltio-network
+
+  # ----------------------------------------------------------------------------
+  # DHT22 Consumer - Temperatura y humedad
+  # ----------------------------------------------------------------------------
+  dht22-consumer:
+    build:
+      context: ./DHT22_ConsumerSender
+      dockerfile: Dockerfile
+    container_name: voltio-dht22-consumer
+    restart: always
+    environment:
+      RABBITMQ_URI: ${RABBITMQ_URI}
+      INFLUXDB_URL: ${INFLUXDB_URL}
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN}
+      INFLUXDB_ORG: ${INFLUXDB_ORG}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET}
+      DHT22_WEBSOCKET_URI: ${DHT22_WEBSOCKET_URI:-ws://websocket-host:8081/ws?topic=dht22&emitter=true}
+    networks:
+      - voltio-network
+
+  # ----------------------------------------------------------------------------
+  # Light Sensor Consumer - Luminosidad
+  # ----------------------------------------------------------------------------
+  light-consumer:
+    build:
+      context: ./LightSensor_ConsumerSender
+      dockerfile: Dockerfile
+    container_name: voltio-light-consumer
+    restart: always
+    environment:
+      RABBITMQ_URI: ${RABBITMQ_URI}
+      INFLUXDB_URL: ${INFLUXDB_URL}
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN}
+      INFLUXDB_ORG: ${INFLUXDB_ORG}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET}
+      LIGHT_WEBSOCKET_URI: ${LIGHT_WEBSOCKET_URI:-ws://websocket-host:8081/ws?topic=light&emitter=true}
+    networks:
+      - voltio-network
+
+  # ----------------------------------------------------------------------------
+  # PZEM Consumer - Medidores de energía eléctrica
+  # ----------------------------------------------------------------------------
+  pzem-consumer:
+    build:
+      context: ./PZEM_ConsumerSender
+      dockerfile: Dockerfile
+    container_name: voltio-pzem-consumer
+    restart: always
+    environment:
+      RABBITMQ_URI: ${RABBITMQ_URI}
+      INFLUXDB_URL: ${INFLUXDB_URL}
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN}
+      INFLUXDB_ORG: ${INFLUXDB_ORG}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET}
+      PZEM_WEBSOCKET_URI: ${PZEM_WEBSOCKET_URI:-ws://websocket-host:8081/ws?topic=pzem&emitter=true}
+    networks:
+      - voltio-network
+
+  # ----------------------------------------------------------------------------
+  # Notification Consumer - Alertas y notificaciones
+  # ----------------------------------------------------------------------------
+  notification-consumer:
+    build:
+      context: ./Notification_ConsumerSender
+      dockerfile: Dockerfile
+    container_name: voltio-notification
+    restart: always
+    environment:
+      RABBITMQ_URI: ${RABBITMQ_URI}
+      WEBHOOK_URL: ${WEBHOOK_URL}
+    networks:
+      - voltio-network
+
+networks:
+  voltio-network:
+    driver: bridge

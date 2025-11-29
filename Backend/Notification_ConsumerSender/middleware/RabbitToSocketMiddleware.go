@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/rabbitmq/amqp091-go"
@@ -14,12 +15,15 @@ import (
 
 // --- CONFIGURACIÓN ---
 const (
-	amqpURI         = "amqp://admin:trike@52.73.74.139:5672/"
 	alertsQueueName = "alerts-queue"
-	apiWebhookURL   = "https://voltioapi.acstree.xyz/api/internal/notifications/service"
 	requestTimeout  = 30 * time.Second
 	maxRetries      = 3
 	retryDelay      = 5 * time.Second
+)
+
+var (
+	amqpURI       = getEnv("RABBITMQ_URI", "amqp://admin:trike@52.73.74.139:5672/")
+	apiWebhookURL = getEnv("WEBHOOK_URL", "https://voltioapi.acstree.xyz/api/internal/notifications/service")
 )
 
 // --- TIPOS DE ALERTAS SOPORTADOS ---
@@ -57,6 +61,13 @@ type NotificationConsumer struct {
 	RabbitConn *amqp091.Connection
 	Channel    *amqp091.Channel
 	HTTPClient *http.Client
+}
+
+func getEnv(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return fallback
 }
 
 func failOnError(err error, msg string) {

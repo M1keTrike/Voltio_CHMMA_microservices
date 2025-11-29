@@ -1,0 +1,61 @@
+# ==============================================================================
+# .gitignore - Voltio Backend
+# ==============================================================================
+
+# Archivos de entorno
+.env
+.env.local
+.env.*.local
+
+# Binarios compilados
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+automation-engine/automation-engine
+WebSocketServer/websocket-server
+**/pir-consumer
+**/dht22-consumer
+**/light-consumer
+**/pzem-consumer
+**/notification-consumer
+
+# Archivos de test
+*.out
+coverage.txt
+coverage.html
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Go
+vendor/
+*.mod.sum.bak
+
+# Logs
+*.log
+logs/
+
+# Docker
+.dockerignore
+
+# Datos locales (si se usan fuera de Docker)
+data/
+*.db
+*.sqlite
+
+# Backups
+*.bak
+*.backup
+
+# Temporales
+tmp/
+temp/
+*.tmp

@@ -3,6 +3,7 @@ package database
 import (
 	"automation-engine/models"
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 
@@ -12,15 +13,17 @@ import (
 var db *sql.DB
 
 func init() {
-	connStr := os.Getenv("POSTGRES_CONN")
-	if connStr == "" {
-		connStr = "host=" + os.Getenv("POSTGRES_HOST") +
-			" port=" + os.Getenv("POSTGRES_PORT") +
-			" user=" + os.Getenv("POSTGRES_USER") +
-			" password=" + os.Getenv("POSTGRES_PASSWORD") +
-			" dbname=" + os.Getenv("POSTGRES_DB") +
-			" sslmode=disable"
-	}
+	// Obtener configuración de variables de entorno
+	host := getEnv("POSTGRES_HOST", "localhost")
+	port := getEnv("POSTGRES_PORT", "5432")
+	user := getEnv("POSTGRES_USER", "chmma")
+	password := getEnv("POSTGRES_PASSWORD", "HSQCx3Ajt4p^aJGC")
+	dbname := getEnv("POSTGRES_DB", "voltiodb")
+
+	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
+
+	log.Printf("[DB] Conectando a PostgreSQL: host=%s port=%s dbname=%s", host, port, dbname)
 	var err error
 	db, err = sql.Open("postgres", connStr)
 	if err != nil {
@@ -28,8 +31,16 @@ func init() {
 	}
 }
 
+// getEnv obtiene variable de entorno con valor por defecto
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
 func LoadAllActiveRules() ([]models.AutomationRuleModel, error) {
-	rows, err := db.Query(`SELECT id, trigger_device_mac, action_device_mac, trigger_metric, operator, threshold, action_payload, active_start, active_end FROM automation_rules WHERE enabled = true`)
+	rows, err := db.Query(`SELECT id, user_id, trigger_device_mac, action_device_mac, name, is_active, trigger_metric, comparison_operator, threshold_value, action_capability_id, action_payload, active_time_start, active_time_end, created_at FROM automation_rules WHERE is_active = true`)
 	if err != nil {
 		return nil, err
 	}
@@ -38,8 +49,23 @@ func LoadAllActiveRules() ([]models.AutomationRuleModel, error) {
 	var result []models.AutomationRuleModel
 	for rows.Next() {
 		var rule models.AutomationRuleModel
-		var activeStart, activeEnd sql.NullTime
-		if err := rows.Scan(&rule.ID, &rule.TriggerDeviceMAC, &rule.ActionDeviceMAC, &rule.TriggerMetric, &rule.Operator, &rule.Threshold, &rule.ActionPayload, &activeStart, &activeEnd); err != nil {
+		var activeStart, activeEnd, createdAt sql.NullTime
+		if err := rows.Scan(
+			&rule.ID,
+			&rule.UserID,
+			&rule.TriggerDeviceMAC,
+			&rule.ActionDeviceMAC,
+			&rule.Name,
+			&rule.IsActive,
+			&rule.TriggerMetric,
+			&rule.ComparisonOperator,
+			&rule.ThresholdValue,
+			&rule.ActionCapabilityID,
+			&rule.ActionPayload,
+			&activeStart,
+			&activeEnd,
+			&createdAt,
+		); err != nil {
 			return nil, err
 		}
 		if activeStart.Valid {
@@ -47,6 +73,9 @@ func LoadAllActiveRules() ([]models.AutomationRuleModel, error) {
 		}
 		if activeEnd.Valid {
 			rule.ActiveEnd = &activeEnd.Time
+		}
+		if createdAt.Valid {
+			rule.CreatedAt = &createdAt.Time
 		}
 		result = append(result, rule)
 	}
