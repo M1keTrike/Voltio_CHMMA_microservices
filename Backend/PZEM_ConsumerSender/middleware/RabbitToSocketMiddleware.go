@@ -45,8 +45,7 @@ func getEnv(key, defaultValue string) string {
 
 // --- ESTRUCTURAS ---
 type PZEMMessage struct {
-	DeviceID string `json:"deviceId"`
-	Payload  struct {
+	Payload struct {
 		MAC         string  `json:"mac"`
 		Voltage     float64 `json:"voltage"`
 		Current     float64 `json:"current"`
@@ -241,7 +240,7 @@ func (pc *PZEMConsumer) processMessage(pzemMsg *PZEMMessage, originalBody []byte
 
 func (pc *PZEMConsumer) writeToInfluxDB(pzemMsg *PZEMMessage) error {
 	p := influxdb2.NewPoint("energy_metrics",
-		map[string]string{"deviceId": pzemMsg.DeviceID, "mac": pzemMsg.Payload.MAC},
+		map[string]string{"mac": pzemMsg.Payload.MAC},
 		map[string]interface{}{
 			"voltage":     pzemMsg.Payload.Voltage,
 			"current":     pzemMsg.Payload.Current,
