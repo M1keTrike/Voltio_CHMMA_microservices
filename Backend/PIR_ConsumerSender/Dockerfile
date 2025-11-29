@@ -1,6 +1,6 @@
 # Etapa 1: Compilación
 # Utiliza una imagen oficial de Go como base para compilar la aplicación.
-FROM golang:1.19-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 # Establece el directorio de trabajo dentro del contenedor.
 WORKDIR /app
