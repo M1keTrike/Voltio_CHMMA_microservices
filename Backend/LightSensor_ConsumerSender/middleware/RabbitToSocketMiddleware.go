@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -15,31 +16,38 @@ import (
 )
 
 // --- CONFIGURACIÓN ---
-const (
-	amqpURI         = "amqp://admin:trike@52.73.74.139:5672/"
+var (
+	amqpURI         = getEnv("RABBITMQ_URI", "amqp://admin:trike@52.73.74.139:5672/")
 	queueName       = "LightSensor_queue"
 	alertsQueueName = "alerts-queue"
-	wsURI           = "wss://websocketvoltio.acstree.xyz/ws?topic=light_sensor&emitter=true"
+	wsURI           = getEnv("LIGHT_WEBSOCKET_URI", "wss://voltiows.acstree.xyz/ws?topic=light&emitter=true")
 
 	// InfluxDB Configuration
-	influxURL    = "http://52.201.107.193:8086"
-	influxToken  = "lJLzxtHLHvPNgdvU9dcInGYb/qLbLxUPgrePzLd47EKCLUWBzJ+RmJkpH0f1HkmQ"
-	influxOrg    = "mi-org"
-	influxBucket = "sensores"
+	influxURL    = getEnv("INFLUXDB_URL", "http://52.201.107.193:8086")
+	influxToken  = getEnv("INFLUXDB_TOKEN", "lJLzxtHLHvPNgdvU9dcInGYb/qLbLxUPgrePzLd47EKCLUWBzJ+RmJkpH0f1HkmQ")
+	influxOrg    = getEnv("INFLUXDB_ORG", "mi-org")
+	influxBucket = getEnv("INFLUXDB_BUCKET", "sensores")
 
 	// Timeout Configuration
 	timeoutDuration = 2 * time.Minute
 	checkInterval   = 30 * time.Second
 )
 
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
 // --- ESTRUCTURAS ---
 type LightSensorMessage struct {
-    SensorMAC  string    `json:"sensor_mac"`
-    SensorType string    `json:"sensor_type"`
-    Timestamp  time.Time `json:"timestamp"`
-    Data       struct {
-        Lux float64 `json:"lux"`
-    } `json:"data"`
+	SensorMAC  string    `json:"sensor_mac"`
+	SensorType string    `json:"sensor_type"`
+	Timestamp  time.Time `json:"timestamp"`
+	Data       struct {
+		Lux float64 `json:"lux"`
+	} `json:"data"`
 }
 
 type AlertMessage struct {

@@ -22,7 +22,7 @@ var (
 	amqpURI         = getEnv("RABBITMQ_URI", "amqp://admin:trike@52.73.74.139:5672/")
 	queueName       = "PZEM_queue"
 	alertsQueueName = "alerts-queue"
-	wsURI           = getEnv("WEBSOCKET_URL", "wss://websocketvoltio.acstree.xyz/ws?topic=pzem&emitter=true")
+	wsURI           = getEnv("PZEM_WEBSOCKET_URI", "wss://voltiows.acstree.xyz/ws?topic=pzem&emitter=true")
 
 	// InfluxDB Configuration
 	influxURL    = getEnv("INFLUXDB_URL", "http://52.201.107.193:8086")
