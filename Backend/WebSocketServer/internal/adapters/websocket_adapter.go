@@ -8,11 +8,11 @@
 //
 // Usage:
 //   - NewWebSocketAdapter(service *core.MessageService) *WebSocketAdapter
-//       Creates a new WebSocketAdapter instance.
+//     Creates a new WebSocketAdapter instance.
 //   - HandleWebSocket(c *gin.Context)
-//       Handles incoming WebSocket connections, distinguishing between emitters and subscribers.
+//     Handles incoming WebSocket connections, distinguishing between emitters and subscribers.
 //   - SendMessage(topic string, msg *models.Message)
-//       Sends a message to all subscribers of a specific topic and MAC address.
+//     Sends a message to all subscribers of a specific topic and MAC address.
 //
 // Thread safety is ensured via an internal mutex.
 package adapters
@@ -30,7 +30,10 @@ import (
 )
 
 var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true },
+	CheckOrigin:       func(r *http.Request) bool { return true },
+	ReadBufferSize:    1024,
+	WriteBufferSize:   1024,
+	EnableCompression: true,
 }
 
 type WebSocketAdapter struct {
@@ -66,13 +69,21 @@ func (ws *WebSocketAdapter) HandleWebSocket(c *gin.Context) {
 	}
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		fmt.Println("Error al conectar WebSocket:", err)
+		fmt.Printf("Error al actualizar conexión WebSocket: %v\n", err)
 		return
 	}
+
+	// Configurar timeouts y límites
+	conn.SetReadLimit(512 * 1024) // 512KB max message size
 
 	defer func() {
 		conn.Close()
 		ws.removeClient(topic, conn, isEmitter)
+		if isEmitter {
+			fmt.Printf("Emisor desconectado del tema: %s\n", topic)
+		} else {
+			fmt.Printf("Suscriptor (MAC: %s) desconectado del tema: %s\n", mac, topic)
+		}
 	}()
 
 	ws.addClient(topic, mac, conn, isEmitter)
@@ -82,7 +93,9 @@ func (ws *WebSocketAdapter) HandleWebSocket(c *gin.Context) {
 	for {
 		var msg models.Message
 		if err := conn.ReadJSON(&msg); err != nil {
-			fmt.Printf("%s desconectado del tema %s\n", ws.getConnectionType(isEmitter), topic)
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure, websocket.CloseNormalClosure) {
+				fmt.Printf("Error inesperado al leer WebSocket [%s]: %v\n", topic, err)
+			}
 			break
 		}
 
@@ -168,12 +181,19 @@ func (ws *WebSocketAdapter) SendMessage(topic string, msg *models.Message) {
 
 		// Enviar a suscriptores de la MAC específica
 		if subscribers, exists := macSubscribers[msgMAC]; exists {
+			sentCount := 0
 			for conn := range subscribers {
 				if err := conn.WriteJSON(msg); err != nil {
+					fmt.Printf("Error enviando mensaje a suscriptor: %v\n", err)
 					conn.Close()
 					delete(subscribers, conn)
+				} else {
+					sentCount++
 				}
 			}
+			fmt.Printf("Mensaje enviado a %d suscriptor(es) de MAC %s en tema %s\n", sentCount, msgMAC, topic)
+		} else {
+			fmt.Printf("No hay suscriptores para MAC %s en tema %s\n", msgMAC, topic)
 		}
 	}
 }

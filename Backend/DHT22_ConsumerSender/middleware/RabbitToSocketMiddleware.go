@@ -9,7 +9,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -78,7 +80,7 @@ type DHT22Consumer struct {
 	AlertsChannel *amqp091.Channel
 	WSConn        *websocket.Conn
 	InfluxClient  influxdb2.Client
-	WriteAPI      api.WriteAPIBlocking
+	WriteAPI      api.WriteAPI
 
 	// Timeout tracking
 	LastSeen      map[string]time.Time
@@ -154,7 +156,7 @@ func (dc *DHT22Consumer) setupConnections() error {
 	// InfluxDB Connection
 	log.Println("Configurando cliente de InfluxDB...")
 	dc.InfluxClient = influxdb2.NewClient(influxURL, influxToken)
-	dc.WriteAPI = dc.InfluxClient.WriteAPIBlocking(influxOrg, influxBucket)
+	dc.WriteAPI = dc.InfluxClient.WriteAPI(influxOrg, influxBucket)
 
 	log.Println("✅ Todas las conexiones DHT22 listas")
 	return nil
@@ -170,7 +172,11 @@ func (dc *DHT22Consumer) Start() error {
 		return fmt.Errorf("fallo al registrar consumidor: %v", err)
 	}
 
-	forever := make(chan bool)
+	
+
+	// CORRECCIÓN: Escuchar señales de apagado
+    sigChan := make(chan os.Signal, 1)
+    signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
 		for d := range msgs {
@@ -186,7 +192,7 @@ func (dc *DHT22Consumer) Start() error {
 			// Procesar mensaje en paralelo
 			if err := dc.processMessage(&dht22Msg, d.Body); err != nil {
 				log.Printf("❌ [DHT22] Error procesando mensaje: %v", err)
-				d.Nack(false, true) // Requeue para reintento
+				d.Nack(false, false)
 				continue
 			}
 
@@ -309,12 +315,12 @@ func (dc *DHT22Consumer) checkTimeouts() {
 	}
 	dc.LastSeenMutex.RUnlock()
 
-	// Procesar timeouts encontrados
+
 	for _, mac := range timeouts {
 		log.Printf("⏰ [DHT22] TIMEOUT detectado para MAC: %s", mac)
 		dc.publishTimeoutAlert(mac)
 
-		// Remover del mapa para evitar spam de alertas
+		
 		dc.LastSeenMutex.Lock()
 		delete(dc.LastSeen, mac)
 		dc.LastSeenMutex.Unlock()

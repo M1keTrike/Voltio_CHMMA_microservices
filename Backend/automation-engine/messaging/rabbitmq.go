@@ -14,6 +14,10 @@ import (
 	"github.com/streadway/amqp"
 )
 
+var globalHttpClient = &http.Client{
+    Timeout: time.Second * 10,
+}
+
 // Mapa para guardar el último timestamp de movimiento por MAC
 var lastMotion = make(map[string]time.Time)
 
@@ -236,18 +240,26 @@ func processMessage(body []byte) {
 }
 
 func isRuleActive(rule rules.AutomationRule) bool {
-	now := time.Now()
-	if rule.ActiveStart != nil && rule.ActiveEnd != nil {
-		// Comparar solo hora y minutos
-		start := rule.ActiveStart.Hour()*60 + rule.ActiveStart.Minute()
-		end := rule.ActiveEnd.Hour()*60 + rule.ActiveEnd.Minute()
-		current := now.Hour()*60 + now.Minute()
-		if current < start || current > end {
-			return false
-		}
-	}
-	return true
+    if rule.ActiveStart == nil || rule.ActiveEnd == nil {
+        return true
+    }
+
+    now := time.Now()
+    // Convertir 'ahora' a minutos desde el inicio del día (ej. 14:30 = 870 minutos)
+    currentMinutes := now.Hour()*60 + now.Minute()
+    
+    startMinutes := rule.ActiveStart.Hour()*60 + rule.ActiveStart.Minute()
+    endMinutes := rule.ActiveEnd.Hour()*60 + rule.ActiveEnd.Minute()
+
+    // Caso normal (ej. de 08:00 a 18:00)
+    if startMinutes <= endMinutes {
+        return currentMinutes >= startMinutes && currentMinutes <= endMinutes
+    }
+    
+    // Caso nocturno (ej. de 22:00 a 06:00)
+    return currentMinutes >= startMinutes || currentMinutes <= endMinutes
 }
+
 
 func evaluateRule(rule rules.AutomationRule, value float64) bool {
 	switch rule.ComparisonOperator {
@@ -298,8 +310,7 @@ func triggerAction(rule rules.AutomationRule) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := globalHttpClient.Do(req)
 	if err != nil {
 		log.Printf("[AutomationEngine] Error enviando acción (%s): %v", capability, err)
 		return

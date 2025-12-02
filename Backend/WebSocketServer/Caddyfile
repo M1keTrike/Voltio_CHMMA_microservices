@@ -1,9 +1,24 @@
-# Caddyfile
-# ¡IMPORTANTE! Reemplaza ws.tudominio.com con tu subdominio real.
-ws.tudominio.com {
-    # Caddy obtiene y renueva automáticamente un certificado SSL de Let's Encrypt para este dominio.
-    # Luego, redirige todo el tráfico al servicio 'app' en el puerto 8081.
-    # 'app' es el nombre del servicio en nuestro docker-compose.yml.
-    # Docker Compose crea una red interna donde los servicios se comunican por su nombre.
-    reverse_proxy app:8081
+# Caddyfile - Configuración para WebSocket Server
+
+voltiowebsocket.acstree.xyz { # Headers para WebSocket
+header { # Permitir conexiones WebSocket
+Connection "Upgrade"
+Upgrade "websocket"
+}
+
+    # Reverse proxy con configuración optimizada para WebSockets
+    reverse_proxy localhost:8081 {
+        # Timeout extendido para conexiones WebSocket de larga duración
+        transport http {
+            read_timeout 0
+            write_timeout 0
+            dial_timeout 30s
+        }
+
+        # Headers necesarios para WebSocket
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
 }
