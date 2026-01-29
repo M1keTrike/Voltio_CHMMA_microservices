@@ -1,37 +1,48 @@
-# Test Producers - Productores de Prueba
+# Test Producers - Sensor Simulators
 
-Este directorio contiene productores de prueba para generar datos de todos los tipos de sensores del sistema Voltio.
+This directory contains test producers that simulate IoT sensors, generating realistic data for all sensor types in the Voltio system. These are essential for development, testing, and demonstrating the system without physical hardware.
 
-## � Estructura del Proyecto
+## 📋 Overview
+
+Test producers simulate real IoT devices by:
+- Generating realistic sensor data with time-based patterns
+- Publishing messages to RabbitMQ queues
+- Mimicking actual sensor behavior and reporting frequencies
+- Supporting multiple device instances per sensor type
+
+## 📁 Project Structure
 
 ```
 test_producers/
 ├── README.md
 ├── go.mod
 ├── go.sum
-├── start_all_producers.ps1      # Script PowerShell para ejecutar todos los productores
-├── start_single_producer.ps1    # Script PowerShell para ejecutar un productor individual
-├── start_all_producers.bat      # Script Batch para ejecutar todos los productores
-├── start_single_producer.bat    # Script Batch para ejecutar un productor individual
+├── start_all_producers.ps1      # PowerShell script to run all producers
+├── start_single_producer.ps1    # PowerShell script to run a single producer
+├── start_all_producers.bat      # Batch script to run all producers (Windows)
+├── start_single_producer.bat    # Batch script to run a single producer (Windows)
 ├── dht22/
-│   └── main.go                  # Productor DHT22 (Temperatura/Humedad)
+│   └── main.go                  # DHT22 Temperature/Humidity producer
 ├── light/
-│   └── main.go                  # Productor Light Sensor
+│   └── main.go                  # Light sensor producer
 ├── pir/
-│   └── main.go                  # Productor PIR Motion
+│   └── main.go                  # PIR motion sensor producer
 └── pzem/
-    └── main.go                  # Productor PZEM Electric Meter
+    └── main.go                  # PZEM electric meter producer
 ```
 
-## 🌡️ Productores Disponibles
+
+## 🌡️ Available Producers
 
 ### 1. DHT22 Producer (dht22/main.go)
 
-- **Cola**: `DHT22_queue`
-- **Datos**: Temperatura y humedad
-- **Frecuencia**: Cada 30 segundos
-- **Dispositivos**: 3 sensores simulados
-- **Formato**:
+Simulates temperature and humidity sensors commonly used in environmental monitoring.
+
+- **Queue**: `DHT22_queue`
+- **Data**: Temperature and humidity readings
+- **Frequency**: Every 30 seconds
+- **Simulated Devices**: 3 sensors
+- **Message Format**:
 
 ```json
 {
@@ -44,13 +55,20 @@ test_producers/
 }
 ```
 
+**Realistic Patterns:**
+- Temperature: 20-35°C with day/night variations
+- Humidity: 40-70% with inverse correlation to temperature
+- Simulates natural environmental changes
+
 ### 2. Light Sensor Producer (light/main.go)
 
-- **Cola**: `LightSensor_queue`
-- **Datos**: Nivel de luz en lux
-- **Frecuencia**: Cada 15 segundos
-- **Dispositivos**: 4 sensores (interior y exterior)
-- **Formato**:
+Simulates ambient light level sensors for indoor and outdoor environments.
+
+- **Queue**: `LightSensor_queue`
+- **Data**: Light level in lux
+- **Frequency**: Every 15 seconds
+- **Simulated Devices**: 4 sensors (indoor and outdoor)
+- **Message Format**:
 
 ```json
 {
@@ -62,13 +80,20 @@ test_producers/
 }
 ```
 
+**Realistic Patterns:**
+- Outdoor sensors: 0-100,000 lux (solar patterns)
+- Indoor sensors: 0-1,000 lux (human activity patterns)
+- Time-based variations throughout the day
+
 ### 3. PIR Motion Sensor Producer (pir/main.go)
 
-- **Cola**: `PIR_queue`
-- **Datos**: Detección de movimiento (boolean)
-- **Frecuencia**: Cada 20 segundos
-- **Dispositivos**: 6 sensores en diferentes ubicaciones
-- **Formato**:
+Simulates passive infrared motion detection sensors for occupancy monitoring.
+
+- **Queue**: `PIR_queue`
+- **Data**: Motion detection (boolean)
+- **Frequency**: Every 20 seconds
+- **Simulated Devices**: 6 sensors in different locations
+- **Message Format**:
 
 ```json
 {
@@ -80,13 +105,20 @@ test_producers/
 }
 ```
 
+**Realistic Patterns:**
+- Location-based motion probabilities
+- Higher activity during 6 AM - 10 PM
+- Different activity levels per zone (entrance, hallway, room, etc.)
+
 ### 4. PZEM Electric Meter Producer (pzem/main.go)
 
-- **Cola**: `PZEM_queue`
-- **Datos**: Medidas eléctricas completas
-- **Frecuencia**: Cada 10 segundos
-- **Dispositivos**: 4 medidores en diferentes circuitos
-- **Formato**:
+Simulates PZEM-004T electric power meters for energy monitoring.
+
+- **Queue**: `PZEM_queue`
+- **Data**: Complete electrical measurements
+- **Frequency**: Every 10 seconds
+- **Simulated Devices**: 4 meters on different circuits
+- **Message Format**:
 
 ```json
 {
@@ -103,124 +135,343 @@ test_producers/
 }
 ```
 
-## ⚙️ Configuración
+**Realistic Patterns:**
+- Consumption patterns by load type
+- Variations based on time of day
+- Complete electrical measurements with power factor
 
-Todos los productores están configurados para conectarse a:
 
-- **RabbitMQ**: `amqp://admin:trike@52.73.74.139:5672/`
-- **Usuario**: `admin`
-- **Password**: `trike`
-- **Dependencias**: `github.com/rabbitmq/amqp091-go`
 
-## 🚀 Instalación y Configuración
+## ⚙️ Configuration
 
-### Prerrequisitos
+All producers use environment variables for configuration:
 
-- Go 1.19 o superior
-- Acceso a RabbitMQ en `52.73.74.139:5672`
+**Environment Variable:**
+- `RABBITMQ_URI` - RabbitMQ connection URI
 
-### Instalación
+**Default Configuration (if not set):**
+- RabbitMQ URI: `amqp://guest:guest@localhost:5672/`
+- This default works for local development with standard RabbitMQ installation
+
+**Dependencies:**
+- `github.com/rabbitmq/amqp091-go` - RabbitMQ Go client
+
+### Setting Custom Configuration
+
+Create a `.env` file in the root directory or export environment variables:
 
 ```bash
-cd test_producers
+# For local RabbitMQ
+export RABBITMQ_URI="amqp://guest:guest@localhost:5672/"
+
+# Or for remote RabbitMQ
+export RABBITMQ_URI="amqp://username:password@hostname:5672/"
+```
+
+## 🚀 Installation and Setup
+
+### Prerequisites
+
+- **Go 1.19 or higher** - [Download](https://golang.org/dl/)
+- **RabbitMQ** - Running locally or accessible remotely
+
+### Installation
+
+```bash
+# Navigate to test producers directory
+cd Backend/test_producers
+
+# Download dependencies
 go mod tidy
+
+# Verify installation
+go mod verify
 ```
 
-## 🎮 Ejecución
+## 🎮 Running Producers
 
-### Opción 1: Scripts Batch (Recomendado para Windows)
+### Option 1: PowerShell Scripts (Recommended for Windows)
 
-```batch
-# Ejecuta todos los productores en ventanas separadas
-start_all_producers.bat
-
-# Ejecutar un productor específico
-start_single_producer.bat dht22
-start_single_producer.bat light
-start_single_producer.bat pir
-start_single_producer.bat pzem
-```
-
-### Opción 2: Scripts PowerShell
-
+**Start all producers at once:**
 ```powershell
-# Ejecuta todos los productores en ventanas separadas
 .\start_all_producers.ps1
+```
+This will open 4 separate PowerShell windows, one for each producer.
 
-# Ejecutar un productor específico
+**Start a specific producer:**
+```powershell
 .\start_single_producer.ps1 dht22
 .\start_single_producer.ps1 light
 .\start_single_producer.ps1 pir
 .\start_single_producer.ps1 pzem
 ```
 
-### Opción 3: Ejecución manual
+### Option 2: Batch Scripts (Windows CMD)
+
+**Start all producers at once:**
+```batch
+start_all_producers.bat
+```
+
+**Start a specific producer:**
+```batch
+start_single_producer.bat dht22
+start_single_producer.bat light
+start_single_producer.bat pir
+start_single_producer.bat pzem
+```
+
+### Option 3: Manual Execution (All Platforms)
+
+Start each producer in a separate terminal:
 
 ```bash
-# Productor DHT22
+# DHT22 Producer
 cd dht22
 go run main.go
 
-# Productor Light Sensor
+# Light Sensor Producer
 cd light
 go run main.go
 
-# Productor PIR Motion
+# PIR Motion Sensor Producer
 cd pir
 go run main.go
 
-# Productor PZEM Electric
+# PZEM Electric Meter Producer
 cd pzem
 go run main.go
 ```
 
-## 📊 Datos Generados
+## 📊 Generated Data
 
-Los productores generan datos realistas que incluyen:
+The producers generate realistic sensor data with intelligent patterns:
 
-### 🌡️ DHT22 (Temperatura/Humedad)
+### 🌡️ DHT22 (Temperature/Humidity)
 
-- Variaciones de temperatura según la hora del día
-- Correlación inversa entre temperatura y humedad
-- Rango: 20-35°C, 40-70% humedad
+- **Temperature variations** based on time of day
+- **Inverse correlation** between temperature and humidity
+- **Range**: 20-35°C temperature, 40-70% humidity
+- **Pattern**: Warmer during afternoon, cooler at night
 
 ### 💡 Light Sensor
 
-- Patrones solares para sensores exteriores (0-100,000 lux)
-- Patrones de uso humano para interiores (0-1,000 lux)
-- Variación según horarios de actividad
+- **Outdoor sensors**: Solar patterns (0-100,000 lux)
+  - Sunrise simulation: gradual increase
+  - Midday peak: maximum brightness
+  - Sunset simulation: gradual decrease
+  - Night: near-zero values
+- **Indoor sensors**: Human activity patterns (0-1,000 lux)
+  - Higher during active hours (8 AM - 10 PM)
+  - Lower during sleep hours
+- **Time-based variations** throughout the day
 
 ### 🚶 PIR Motion
 
-- Probabilidades de movimiento basadas en ubicación
-- Patrones horarios realistas (mayor actividad 6AM-10PM)
-- Diferentes niveles de actividad por zona
+- **Location-based probabilities**:
+  - Entrance: Higher motion probability
+  - Hallways: Medium motion probability
+  - Storage: Lower motion probability
+- **Time-based patterns**: More activity 6 AM - 10 PM
+- **Realistic randomness**: Not all sensors detect motion simultaneously
+- **Different activity levels** per zone
 
 ### ⚡ PZEM Electric
 
-- Patrones de consumo según tipo de carga
-- Variaciones por horario y tipo de dispositivo
-- Medidas eléctricas completas con factor de potencia
+- **Load-type patterns**:
+  - Main circuit: High, variable consumption
+  - HVAC circuit: Cyclic patterns
+  - Lighting: Time-based (on at night)
+  - Appliances: Intermittent usage
+- **Complete measurements**:
+  - Voltage: ~220V with minor variations
+  - Current: Proportional to power consumption
+  - Power: Calculated from voltage and current
+  - Energy: Cumulative consumption
+  - Frequency: ~50/60 Hz based on region
+  - Power Factor: 0.85-0.98 (realistic range)
+- **Time-based variations** reflecting usage patterns
 
-## 🎯 Propósito de Testing
+## 🎯 Testing Purposes
 
-Estos productores permiten probar:
+These producers enable comprehensive testing of:
 
-1. **Sistema de Alertas por Timeout**: Deteniendo productores para activar alertas
-2. **Flujo de Datos**: Validar escritura en InfluxDB y streaming WebSocket
-3. **Carga del Sistema**: Probar con múltiples sensores simultáneos
-4. **Alertas CRÍTICAS**: El productor PZEM puede generar condiciones para alertas eléctricas
+### 1. Timeout Alert System
+- **Test**: Stop one or more producers
+- **Expected**: Alert triggered after timeout period (2 minutes default)
+- **Verifies**: Consumer timeout detection and alert generation
 
-## 🛑 Detener Productores
+### 2. Data Flow Validation
+- **Test**: Run producers and verify data pipeline
+- **Verifies**:
+  - Messages published to RabbitMQ queues
+  - Consumer services receive messages
+  - Data written to InfluxDB
+  - Real-time streaming via WebSocket
+  - Data integrity throughout pipeline
 
-- **Scripts Batch/PowerShell**: Cerrar las ventanas de CMD/PowerShell correspondientes
-- **Ejecución manual**: Presionar `Ctrl+C` en cada terminal
+### 3. System Load Testing
+- **Test**: Run multiple producers simultaneously
+- **Verifies**:
+  - System handles concurrent sensor data
+  - No message loss under load
+  - Performance metrics remain acceptable
+  - Resource utilization is reasonable
 
-## 📝 Logs
+### 4. Critical Alerts
+- **Test**: PZEM producer can generate conditions for electrical alerts
+- **Verifies**:
+  - High power consumption detection
+  - Voltage anomaly detection
+  - Alert notification system
+  - Automation engine rule triggers
 
-Cada productor muestra:
+### 5. Development Workflow
+- **Test**: Develop new features without physical sensors
+- **Benefits**:
+  - Consistent, repeatable test data
+  - No hardware dependencies
+  - Easy to modify for edge cases
+  - Quick iteration cycles
 
-- ✅ Estado de conexión a RabbitMQ
-- 📤 Datos enviados con valores en tiempo real
-- ❌ Errores de conexión o publicación
-- 🔄 Indicador de frecuencia de envío
+## 🛑 Stopping Producers
+
+### PowerShell/Batch Scripts
+Close the corresponding CMD or PowerShell windows that were opened.
+
+### Manual Execution
+Press `Ctrl+C` in each terminal running a producer.
+
+**Note**: Producers will attempt to gracefully close their RabbitMQ connections before exiting.
+
+## 📝 Log Output
+
+Each producer displays informative logs:
+
+### Startup Logs
+```
+🌡️ Starting DHT22 Test Producer...
+✅ Connected to RabbitMQ - Queue: DHT22_queue
+🔄 Publishing data every 30 seconds...
+```
+
+### Data Publishing Logs
+```
+📤 [DHT22-001] 24.5°C, 62.3%
+📤 [DHT22-002] 26.1°C, 58.7%
+📤 [DHT22-003] 23.8°C, 64.1%
+```
+
+### Error Logs
+```
+❌ Error connecting to RabbitMQ: dial tcp: connection refused
+❌ Error publishing message: channel closed
+```
+
+### Log Indicators
+- ✅ Success/Connection established
+- 📤 Data sent successfully
+- ❌ Errors (connection, publishing)
+- 🔄 Status/Frequency information
+
+## 🔧 Customization
+
+### Modifying Data Patterns
+
+Edit the `main.go` file in each producer directory to customize:
+
+1. **Sending Frequency**:
+   ```go
+   time.Sleep(30 * time.Second) // Change to desired interval
+   ```
+
+2. **Data Ranges**:
+   ```go
+   baseTemp := 20.0 + rand.Float64()*15.0 // Adjust min/max values
+   ```
+
+3. **Number of Devices**:
+   ```go
+   devices := []struct {
+       DeviceID string
+       MAC      string
+   }{
+       {"DHT22-DEV-001", "DHT22-001"},
+       {"DHT22-DEV-002", "DHT22-002"},
+       // Add more devices here
+   }
+   ```
+
+4. **Message Format**:
+   Modify the struct definitions to add or change fields.
+
+### Adding a New Producer
+
+1. Create a new directory (e.g., `newsensor/`)
+2. Copy structure from an existing producer
+3. Modify message format and data generation logic
+4. Update `start_all_producers` scripts to include new producer
+5. Add environment variable configuration if needed
+
+## 🐛 Troubleshooting
+
+### "Failed to connect to RabbitMQ"
+
+**Problem**: Producer can't connect to RabbitMQ  
+**Solutions**:
+- Verify RabbitMQ is running: `rabbitmq-server`
+- Check connection URI in environment variables
+- Test connection: http://localhost:15672 (management UI)
+- Verify firewall isn't blocking port 5672
+
+### "Queue declaration failed"
+
+**Problem**: RabbitMQ won't create queue  
+**Solutions**:
+- Check RabbitMQ permissions
+- Verify queue name doesn't conflict
+- Review RabbitMQ logs for details
+- Try deleting and recreating queue in management UI
+
+### Producer starts but no messages appear
+
+**Problem**: Producer runs but consumers don't receive messages  
+**Solutions**:
+- Check RabbitMQ management UI: http://localhost:15672
+- Verify queue exists and has published messages
+- Check queue name matches consumer configuration
+- Ensure consumers are running and connected
+
+### High CPU usage
+
+**Problem**: Producer using excessive CPU  
+**Solutions**:
+- Increase sleep duration between messages
+- Reduce number of simulated devices
+- Optimize data generation algorithms
+- Check for infinite loops in modified code
+
+## 📚 Additional Resources
+
+- [RabbitMQ Go Client](https://github.com/rabbitmq/amqp091-go) - Official documentation
+- [RabbitMQ Tutorials](https://www.rabbitmq.com/getstarted.html) - Learn RabbitMQ basics
+- [Main Project README](../../README.md) - Complete system documentation
+- [Environment Setup](../../ENVIRONMENT_SETUP.md) - Configuration guide
+
+## 🤝 Contributing
+
+Want to improve the test producers?
+
+1. Add more realistic data patterns
+2. Create producers for new sensor types
+3. Improve error handling and logging
+4. Add configuration options
+5. Write documentation for new features
+
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines.
+
+---
+
+**Happy Testing! 🚀**
+
+*For questions or issues, please open an issue on the [GitHub repository](https://github.com/M1keTrike/Voltio_CHMMA_microservices).*
